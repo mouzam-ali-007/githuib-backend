@@ -6,39 +6,24 @@ const router = express.Router();
 
 
 // Step 1: Redirect user to GitHub for authentication
-router.get("/connect", (req, res) => {
-  console.log("process, ", process.env.GITHUB_CLIENT_ID)
-  const redirectUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&redirect_uri=${process.env.GITHUB_REDIRECT_URI}&scope=repo,user`;
-  res.redirect(redirectUrl);
-});
+ 
+router.get("/connect", integrationController.redirectUrl  );
 
 
 
 // Step 2: GitHub redirects back with "code"
 
 
-router.get('/callback',  integrationController.gitHubCallback);
+router.get('/callback/:code',  integrationController.gitHubCallback);
 
 // Step 3: Check connection status
-router.get("/status/:userId", async (req, res) => {
-  const { userId } = req.params;
+router.get("/status/:userId", integrationController.gitHubConnectionStatus);
 
-  try {
-    const integration = await GithubIntegration.findOne({ userId });
 
-    if (!integration) {
-      return res.json({ connected: false });
-    }
-
-    res.json({
-      connected: true,
-      connectedAt: integration.connectedAt,
-      githubUser: integration.githubUser,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error fetching integration status" });
-  }
-});
+// Step 3: Check connection status
+router.get("/access_token", integrationController.getAccessToken);
 
 export default router;
+
+
+

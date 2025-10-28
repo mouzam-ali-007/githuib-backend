@@ -2,18 +2,43 @@ import Integration from "../models/integration.js";
 import axios from "axios";
 
 
+const BASE_URL = "https://github.com/login/oauth"
 class IntegrationController {
+  
 
-  // Call back 
+  /* 
+    Redriect URL Function
+  */
+
+  async redirectUrl  (req, res) {
+    try {
+      const redirectUrl = `${BASE_URL}/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&redirect_uri=${process.env.GITHUB_REDIRECT_URI}&scope=repo,user`;
+      res.redirect(redirectUrl);
+        
+    } catch (error) {
+      res.send('Some thing went wrong');
+ 
+    }
+  }
+
+
+
+  /* 
+  
+    Redriect URL Function
+  
+    */
+
 
   async gitHubCallback  (req, res) {
-    const code = req.query.code || 'abd63fe318bc55dffa43' 
+    console.log("gitHubCallback", req);
+    const code = req.params.code|| '9e51089d4a8b9316dcad' 
     const userId = req.query.userId || "53119538"; // replace with real logged-in user id
   
     try {
       // Exchange code for access token
       const tokenResponse = await axios.post(
-        "https://github.com/login/oauth/access_token",
+        `${BASE_URL}/oauth/access_token`,
         {
           client_id: process.env.GITHUB_CLIENT_ID,
           client_secret: process.env.GITHUB_CLIENT_SECRET,
@@ -41,6 +66,7 @@ class IntegrationController {
         avatarUrl: githubUser.avatar_url,
         accessToken,
         githubUser,
+        connectedAt: new Date(),
        });
  
        console.log(record)
@@ -53,24 +79,54 @@ class IntegrationController {
       res.status(500).send(  error.response?.data);
     }
   
-  }
+  }  
 
- 
+
+
   // create integration
-  async createIntegration(req, res) {
+  async gitHubConnectionStatus(req, res) {
     try {
-      if (!req.body) {
-        return res.status(400).json({ message: 'ERROR_MISSING_FIELDS' });
+     
+      const userId =  '53119538' ||  req.query.userId ;
+      const integration = await Integration.find({userId : userId});
+  
+      console.log("integration ", integration)
+      if (!integration) {
+        return res.json({ message: 'No Connection',  connected: false });
       }
      
-      // Implementation for creating integration
-      // res.status(200).json({ message: 'SUCCESS_CREATED', data: integrationData });
+// Implementation for creating integration
+
+      res.status(200).json({ message: 'Connected', data: integration , connected: true});
 
     } catch (error) {
       console.error("Error creating integration:", error);
       res.status(500).json({ message: 'ERROR_INTERNAL_SERVER' });
     }
   }
+
+
+  async getAccessToken (req, res) {
+   // const { code } = req.body;
+    
+    
+      const response = await axios.post('https://github.com/login/oauth/access_token', {
+        client_id: process.env.GITHUB_CLIENT_ID ,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code : '1c7bc188d4e5b0da641c'
+      }, {
+        headers: { 'Accept': 'application/json' }
+      });
+    
+      const { access_token } = response.data;
+      if (access_token) {
+        res.json({  status: true ,  access_token  });
+      }else{
+        res.json({ status: false,  });
+      }
+     
+  }
+
 
   // list integrations
   async listIntegrations(req, res) {

@@ -10,7 +10,7 @@ const app = express();
 
 
 app.use(cors({
-  origin: '*'  || 'http://localhost:5173',
+  origin: '*' || 'http://localhost:4200/',
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -36,7 +36,7 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("AL Marina Database connected!"))
+  .then(() => console.log(" Database connected!"))
   .catch(err => console.error('MongoDB connection error:', err));
 
 app.listen(PORT, () => {
